@@ -1,0 +1,95 @@
+---
+title: "first-analysis"
+author: "speckerf"
+date: "2020-12-03"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+```{r}
+library(tidyverse)
+library(cluster)
+library(reshape2)
+```
+
+
+
+```{r}
+mydata <- iris
+
+glimpse(mydata)
+head(mydata)
+
+ggplot(mydata)+
+ geom_point(aes(x = Sepal.Length, y = Sepal.Width), stroke = 2)+
+ facet_wrap(~ Species)+ 
+ labs(x = 'Sepal Length', y = 'Sepal Width')+
+ theme_bw()
+
+
+ggplot(mydata)+
+ geom_point(aes(x = Petal.Length, y = Petal.Width), stroke = 2)+
+ facet_wrap(~ Species)+ 
+ labs(x = 'Petal Length', y = 'Petal Width')+
+ theme_bw()
+
+
+ggplot(mydata)+
+ geom_boxplot(aes(x = Species, y = Sepal.Length, fill = Species))+
+ theme_bw()
+ggplot(mydata)+
+ geom_boxplot(aes(x = Species, y = Sepal.Width, fill = Species))+
+ theme_bw()
+ggplot(mydata)+
+ geom_boxplot(aes(x = Species, y = Petal.Length, fill = Species))+
+ theme_bw()
+ggplot(mydata)+
+ geom_boxplot(aes(x = Species, y = Petal.Width, fill = Species))+
+ theme_bw()
+```
+
+
+Now comes the clustering:
+```{r}
+
+set.seed(123) # for reproduction
+wcss <- vector()
+for (i in 1:10) wcss[i] <- sum(kmeans(mydata[, -5], i)$withinss)
+plot(1:10,
+ wcss,
+ type = 'b',
+ main = paste('The Elbow Method'),
+ xlab = 'Number of Clusters',
+ ylab = 'WCSS'
+)
+
+set.seed(123)
+km <- kmeans( x = mydata[, -5] , centers = 3)
+yclus <- km$cluster
+table(yclus)
+
+
+clusplot(mydata[, -5],
+ yclus,
+ lines = 0,
+ shade = TRUE,
+ color = TRUE,
+ labels = 0,
+ plotchar = FALSE,
+ span = TRUE,
+ main = paste('Clusters of Iris Flowers')
+)
+
+mydata$cluster.kmean <- yclus
+cm <- table(mydata$Species, mydata$cluster.kmean)
+cm
+
+mtable <- melt(cm)
+ggplot(mtable)+
+ geom_tile(aes(x = Var1, y = Var2, fill = value))+
+ labs(x = 'Species', y = 'kmeans Cluster')+
+ theme_bw()
+```
+
